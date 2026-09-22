@@ -1,0 +1,15 @@
+{
+  "recordStage": "Local validation before first GitHub deployment",
+  "typecheckAndBuild": "passed",
+  "projectSubpathAssets": [
+    "./favicon.svg",
+    "./assets/index-DmvcJI3a.js",
+    "./assets/three-CNVPclBp.js",
+    "./assets/index-NPaXxUW9.css"
+  ],
+  "javascriptImports": "local files resolved",
+  "workflowSyntax": "parsed",
+  "remoteGitHubDeployment": "not run",
+  "mainlandNetworkTest": "not run",
+  "sourceCommit": "95599bae683c902e8bbe7252edbdeb2ebf229fc7"
+}
