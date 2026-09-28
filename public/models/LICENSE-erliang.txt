@@ -1,0 +1,21 @@
+Dog model attribution and license
+
+Asset: Dog.obj, Animal Pack Vol.2 by @Quaternius
+Creator: Quaternius
+Source edition: author-uploaded OpenGameArt release, 3 November 2017
+Source: https://opengameart.org/content/animated-animales-low-poly
+Download: https://opengameart.org/sites/default/files/Animal%20Pack%20Vol.2%20by%20%40Quaternius.zip
+License on this release page: CC0 1.0 Universal
+License: https://creativecommons.org/publicdomain/zero/1.0/
+Accessed: 2026-09-28
+
+This is the above 2017 OpenGameArt CC0 edition, not a new Quaternius pack
+released under a different license. The source archive's Dog.obj was retained;
+only its unused mtllib/usemtl references were removed to avoid missing-file
+requests. The viewer normalizes scale/orientation, supplies a plain coat
+material and applies a rigid peeking movement. The mesh was not created by
+the author of this website. No endorsement or affiliation is implied.
+
+CC0 1.0 dedicates the work to the public domain to the extent permitted by law.
+The full legal code is available at:
+https://creativecommons.org/publicdomain/zero/1.0/legalcode

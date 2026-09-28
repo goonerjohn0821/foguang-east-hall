@@ -20,7 +20,7 @@ export class FoguangTemple {
   update(dt:number){
     this.explosion.update(dt);this.structureAmount=THREE.MathUtils.damp(this.structureAmount,this.structureTarget,5,dt);const amount=smooth(this.structureAmount);
     this.roofMaterials.forEach((m,index)=>{if(m.transparent!==(amount>.002)){m.transparent=amount>.002;m.needsUpdate=true;}m.opacity=1-amount*(index===0?.992:.93);m.depthWrite=amount<.15;});
-    for(let key of ['plaster','door','dark'] as const){const mat=this.materials[key];if(mat.transparent!==(amount>.002)){mat.transparent=amount>.002;mat.needsUpdate=true;}mat.opacity=1-amount*.9;mat.depthWrite=amount<.15;}
+    for(let key of ['plaster','door','wallRed','dark'] as const){const mat=this.materials[key];if(mat.transparent!==(amount>.002)){mat.transparent=amount>.002;mat.needsUpdate=true;}mat.opacity=1-amount*.9;mat.depthWrite=amount<.15;}
     Object.entries(structureColors).forEach(([key,color])=>{const mat=this.materials[key as keyof Materials];mat.color.copy(this.originals.get(mat)!).lerp(new THREE.Color(color),amount*.7);mat.emissive.setHex(color).multiplyScalar(amount*.1);});
     this.group.traverse(o=>{if(o instanceof THREE.Mesh&&['roof','ridge','wall','window'].includes(o.userData.kind))o.castShadow=amount<.15;});
   }

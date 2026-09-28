@@ -4,6 +4,9 @@ import {random} from './materials';
 import type {Materials} from './materials';
 import {roofGeometry} from './buildings/Roof';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {buildAuxiliary,buildErliangGate} from './environment/CourtyardDetails';
+import {buildVisitors} from './environment/Visitors';
+import {COURT,AUXILIARY,ERLIANG_GATE} from './environment/layout';
 function pineFoliage(){
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const context=canvas.getContext('2d')!,r=random(421);
   for(let branch=0;branch<19;branch++){
@@ -20,7 +23,7 @@ function pineFoliage(){
   const cards=[0,Math.PI/3,Math.PI*2/3].map(a=>{const g=new THREE.PlaneGeometry(2,2);g.rotateY(a);return g;});const geometry=mergeGeometries(cards);cards.forEach(g=>g.dispose());return {material,geometry};
 }
 export function createEnvironment(scene:THREE.Scene,m:Materials){
-  m={...m,tile:m.tile.clone(),plaster:m.plaster.clone(),door:m.door.clone()};
+  m={...m,tile:m.tile.clone(),plaster:m.plaster.clone(),door:m.door.clone(),wallRed:m.wallRed.clone()};
   const group=new THREE.Group();group.name='山地寺院环境（意象化）';scene.add(group);const rng=random(343);
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(550,550),m.earth);ground.rotation.x=-Math.PI/2;ground.position.y=-.2;ground.receiveShadow=true;group.add(ground);
   const courtyard=new THREE.Mesh(new THREE.PlaneGeometry(97,95),m.paving);courtyard.rotation.x=-Math.PI/2;courtyard.position.set(0,.013,15);courtyard.receiveShadow=true;group.add(courtyard);
@@ -38,10 +41,17 @@ export function createEnvironment(scene:THREE.Scene,m:Materials){
     for(let i=0;i<attr.count;i++){const x=attr.getX(i),z=attr.getZ(i);attr.setXYZ(i,x,8+Math.pow(Math.cos(z/130*Math.PI),2)*(19+8*Math.sin(x*.031+layer*2)+11*Math.sin(x*.013)),z-205-layer*75);}mount.computeVertexNormals();group.add(new THREE.Mesh(mount,new THREE.MeshStandardMaterial({color:layer===0?0x778c83:0x93a8a1,roughness:1})));
   }
   // Courtyard walls are merged into one geometry, with a break at the main approach.
-  const walls=mergedBoxes([{p:v(-43,1.05,2),s:v(.9,2.1,66)},{p:v(43,1.05,2),s:v(.9,2.1,66)},{p:v(0,1.05,-30),s:v(86,2.1,.9)}]);const wall=new THREE.Mesh(walls,m.plaster);wall.castShadow=wall.receiveShadow=true;group.add(wall);
-  const caps=new Batch(boxGeometry,m.tile,'environment');caps.add(v(-43,2.18,2),v(1.15,.24,66)).add(v(43,2.18,2),v(1.15,.24,66)).add(v(0,2.18,-30),v(86,.24,1.15)).finish(group);
+  const h=COURT.wallHeight,gapHalf=(ERLIANG_GATE.width+.36)/2;
+  const wallParts=[{p:v(-43,h/2,2),s:v(.9,h,66)},{p:v(0,h/2,-30),s:v(86,h,.9)}];
+  for(const [a,b] of [[COURT.wallBack,ERLIANG_GATE.z-gapHalf],[ERLIANG_GATE.z+gapHalf,COURT.wallFront]])wallParts.push({p:v(43,h/2,(a+b)/2),s:v(.9,h,b-a)});
+  const lintelBottom=ERLIANG_GATE.height+.18;
+  wallParts.push({p:v(43,(h+lintelBottom)/2,ERLIANG_GATE.z),s:v(.9,h-lintelBottom,gapHalf*2)});
+  const walls=mergedBoxes(wallParts);const wall=new THREE.Mesh(walls,m.plaster);wall.name='院墙 · 二亮门洞已留空';wall.castShadow=wall.receiveShadow=true;group.add(wall);
+  const caps=new Batch(boxGeometry,m.tile,'environment');caps.add(v(-43,h+.10,2),v(1.15,.20,66)).add(v(43,h+.10,2),v(1.15,.20,66)).add(v(0,h+.10,-30),v(86,.20,1.15)).finish(group);
+  buildAuxiliary(group,m);const erliang=buildErliangGate(group,m);const visitors=buildVisitors(group);
+  group.userData.erliangAnchor=erliang.dogAnchor;
   // Recessive ancillary silhouettes, intentionally not a survey of the full monastery.
-  for(let sign of [-1,1]){
+  for(let sign of [-1]){
     const aux=new THREE.Group();aux.position.set(sign*38,0,-9);aux.rotation.y=Math.PI/2;aux.scale.set(.34,.37,.3);group.add(aux);
     box(aux,m.plaster,v(0,4.7,0),v(34,8.5,17),'environment');
     for(let face=0;face<4;face++){const roof=new THREE.Mesh(roofGeometry(face),m.tile);roof.castShadow=true;aux.add(roof);}
@@ -65,7 +75,7 @@ export function createEnvironment(scene:THREE.Scene,m:Materials){
   for(let i=0;i<12;i++)tree((i%2?1:-1)*(48+rng()*20),-18+rng()*90,6+rng()*6);
   trunks.finish(group);const trees=foliage.finish(group);if(trees)trees.castShadow=false;
   const grasses=new Batch(new THREE.ConeGeometry(.11,.64,3),m.grass,'environment');
-  for(let i=0;i<950;i++){const x=(rng()-.5)*115,z=(rng()-.5)*100;if(Math.abs(x)<24&&z<24&&z>-16||Math.abs(x)<7&&z>10||Math.abs(x)<36&&z>20)continue;grasses.add(v(x,.2,z),v(.6+rng(),.4+rng(),.6+rng()),new THREE.Euler(0,rng()*6.28,0));}const grass=grasses.finish(group);if(grass)grass.castShadow=false;
+  for(let i=0;i<950;i++){const x=(rng()-.5)*115,z=(rng()-.5)*100;if(Math.abs(x)<24&&z<24&&z>-16||Math.abs(x)<7&&z>10||Math.abs(x)<36&&z>20||Math.abs(x-AUXILIARY.x)<5&&Math.abs(z-AUXILIARY.z)<9||x>39&&Math.abs(z-ERLIANG_GATE.z)<3)continue;grasses.add(v(x,.2,z),v(.6+rng(),.4+rng(),.6+rng()),new THREE.Euler(0,rng()*6.28,0));}const grass=grasses.finish(group);if(grass)grass.castShadow=false;
   const sky=new THREE.Mesh(new THREE.SphereGeometry(460,32,20),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{top:{value:new THREE.Color(0x7cacc5)},bottom:{value:new THREE.Color(0xdde1d4)}},vertexShader:'varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform vec3 top;uniform vec3 bottom;varying vec3 vWorld;void main(){float h=pow(clamp(normalize(vWorld).y+.03,0.,1.),.6);gl_FragColor=vec4(mix(bottom,top,h),1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'}));sky.material.fog=false;scene.add(sky);
-  return group;
+  return Object.assign(group,{update(_dt:number,explosion=0){visitors.visible=explosion<.015;}});
 }

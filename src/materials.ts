@@ -8,7 +8,7 @@ function surface(kind: 'wood' | 'stone' | 'tile' | 'paving', seed: number) {
   const data=ctx.getImageData(0,0,512,512);
   for(let y=0;y<512;y++)for(let x=0;x<512;x++){
     const i=(y*512+x)*4;
-    const n=(rng()-.5)*(kind==='wood'?17:32)+(kind==='wood'?Math.sin(x*.7+Math.sin(y*.022)*3)*13:Math.sin(x*.035)*Math.sin(y*.06)*7);
+    const n=(rng()-.5)*(kind==='wood'?12:32)+(kind==='wood'?Math.sin(x*.7+Math.sin(y*.022)*3)*4:Math.sin(x*.035)*Math.sin(y*.06)*7);
     for(let k=0;k<3;k++)data.data[i+k]+=n;
   } ctx.putImageData(data,0,0);
   if(kind==='wood')for(let i=0;i<95;i++){ctx.strokeStyle=`rgba(47,29,17,${.03+rng()*.13})`;ctx.lineWidth=.3+rng()*1.2;const x=rng()*512;ctx.beginPath();ctx.moveTo(x,0);ctx.bezierCurveTo(x+7,170,x-7,340,x,512);ctx.stroke();}
@@ -23,7 +23,7 @@ export function createMaterials(){
   paving.repeat.set(24,24);stone.repeat.set(3,1);
   const mat=(color:number,map?:THREE.Texture,roughness=.88)=>new THREE.MeshStandardMaterial({color,map:map??null,roughness,metalness:0});
   return {
-    column:mat(0x71352a,wood),beam:mat(0x63412d,wood),fang:mat(0x855438,wood),dougong:mat(0x704536,wood),purlin:mat(0x8b6741,wood),rafter:mat(0x92764c,wood),door:mat(0x513529,wood),
+    column:mat(0x794b3b,wood),beam:mat(0x796049,wood),fang:mat(0x795140,wood),dougong:mat(0x85705b,wood),purlin:mat(0x907654,wood),rafter:mat(0x937b59,wood),door:mat(0x854738,wood),wallRed:mat(0x914d3c,stone),
     tile:mat(0x575950,tile,.94),ridge:mat(0x646458,tile),stone:mat(0xaaa393,stone),plaster:mat(0xbab1a0,stone),paving:mat(0xc0b6a1,paving),earth:mat(0x747b57),bark:mat(0x4b4331,wood),leaves:mat(0x344d30),grass:mat(0x69764a),dark:mat(0x211e19),metal:mat(0x61513c,undefined,.65)
   };
 }

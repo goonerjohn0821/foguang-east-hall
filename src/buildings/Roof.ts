@@ -3,12 +3,19 @@ import {Batch,boxGeometry,tube,v} from '../geometry';
 import {random} from '../materials';
 import type {Materials} from '../materials';
 import type {Explosion} from '../explosion';
-export const ROOF={halfX:21.35,halfZ:12.8,ridgeHalf:11.3,ridgeY:14.3,eaveY:9.28};
+import {ROOF} from './config';
+export {ROOF} from './config';
 export function roofPoint(face:number,u:number,t:number){
   const {halfX,halfZ,ridgeHalf,ridgeY,eaveY}=ROOF;
   const width=ridgeHalf+(halfX-ridgeHalf)*t;
-  const y=ridgeY-(ridgeY-eaveY)*(1-Math.pow(1-t,1.63))+.16*Math.pow(t,9)+.34*Math.pow(Math.abs(u),7)*Math.pow(t,5);
+  const y=ridgeY-(ridgeY-eaveY)*(1-Math.pow(1-t,1.45))+.06*Math.pow(t,9)+.20*Math.pow(Math.abs(u),7)*Math.pow(t,5);
   return face<2?v(u*width,y,(face===0?1:-1)*halfZ*t):v((face===2?1:-1)*width,y,u*halfZ*t);
+}
+// Keep tile / rafter lanes parallel. Outer lanes begin at the hip boundary.
+export function roofLaneStart(face:number,lateral:number){return face<2?Math.max(0,(Math.abs(lateral)-ROOF.ridgeHalf)/(ROOF.halfX-ROOF.ridgeHalf)):Math.abs(lateral)/ROOF.halfZ;}
+export function roofLanePoint(face:number,lateral:number,t:number){
+  const span=face<2?ROOF.ridgeHalf+(ROOF.halfX-ROOF.ridgeHalf)*t:Math.max(.00001,ROOF.halfZ*t);
+  return roofPoint(face,THREE.MathUtils.clamp(lateral/span,-1,1),t);
 }
 export function roofGeometry(face:number){
   const pos:number[]=[],uv:number[]=[],idx:number[]=[];const nu=48,nt=28;
@@ -24,10 +31,12 @@ export function buildRoof(parent:THREE.Group,m:Materials,e:Explosion){
     const group=new THREE.Group();parent.add(group);const material=m.tile.clone();surfaces.push(material);material.side=THREE.DoubleSide;
     const mesh=new THREE.Mesh(roofGeometry(face),material);mesh.castShadow=mesh.receiveShadow=true;mesh.userData.kind='roof';group.add(mesh);
     const batch=new Batch(tiles,m.tile,'roof');const rows=35;const count=face<2?146:88;
-    for(let row=0;row<rows;row++){
-      const t0=row/rows,t1=(row+1)/rows;const n=face<2?count:Math.max(2,Math.round(count*(t0+t1)/2));
-      for(let i=0;i<n;i++){
-        const u=-1+(i+.5)*2/n;const a=roofPoint(face,u,t0).add(v(0,.025,0)),b=roofPoint(face,u,t1+.001>1?1:t1+.001);
+    const extent=face<2?ROOF.halfX:ROOF.halfZ;
+    for(let i=0;i<count;i++){
+      const lateral=-extent+(i+.5)*2*extent/count,start=roofLaneStart(face,lateral);
+      for(let row=0;row<rows;row++){
+        const t0=Math.max(start,row/rows),t1=Math.min(1,(row+1)/rows+.001);if(t1-t0<.003)continue;
+        const a=roofLanePoint(face,lateral,t0).add(v(0,.025,0)),b=roofLanePoint(face,lateral,t1);
         const axis=b.clone().sub(a),length=axis.length();axis.normalize();const x=v(0,1,0).cross(axis).normalize(),y=axis.clone().cross(x).normalize();
         const matrix=new THREE.Matrix4().makeBasis(x,y,axis);matrix.setPosition(a);matrix.scale(v(1,1,length+.025));const c=.8+rng()*.32;batch.matrix(matrix,new THREE.Color(c,c,c*.985));
       }
@@ -43,12 +52,16 @@ export function buildRoof(parent:THREE.Group,m:Materials,e:Explosion){
     }edge.finish(eave);ends.finish(eave);e.register(eave,'rafter',direction.clone().multiplyScalar(.76),2,face);
   }
   const ridges=new THREE.Group();parent.add(ridges);
-  ridges.add(tube(Array.from({length:33},(_,i)=>v(-11.4+i*22.8/32,14.5+.07*Math.pow(Math.abs(i-16)/16,4),0)),.23,m.ridge,'ridge'));
+  const {ridgeHalf,ridgeY}=ROOF;
+  ridges.add(tube(Array.from({length:33},(_,i)=>v(-ridgeHalf+i*ridgeHalf*2/32,ridgeY+.20+.07*Math.pow(Math.abs(i-16)/16,4),0)),.22,m.ridge,'ridge'));
   // Four hip ridges, sharing exactly the same edge curve as the adjoining roof slopes.
   for(let face of [0,1])for(let u of [-1,1])ridges.add(tube(Array.from({length:25},(_,i)=>roofPoint(face,u,i/24).add(v(0,.15,0))),.16,m.ridge,'ridge'));
   const shape=new THREE.Shape();shape.moveTo(-.5,0);shape.lineTo(.38,0);shape.quadraticCurveTo(1,.4,1.05,1.03);shape.quadraticCurveTo(1.04,1.68,.44,2.08);shape.quadraticCurveTo(.64,1.38,.14,1.17);shape.quadraticCurveTo(-.12,1.48,-.46,1.26);shape.quadraticCurveTo(-.35,.72,-.5,0);
   const chiwei=new THREE.ExtrudeGeometry(shape,{depth:.49,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.07,bevelThickness:.06});chiwei.translate(0,0,-.245);
-  for(let sign of [-1,1]){const ornament=new THREE.Mesh(chiwei,m.ridge);ornament.position.set(sign*11.45,14.56,0);ornament.scale.x=sign;ornament.castShadow=true;ornament.userData.kind='ridge';ridges.add(ornament);for(let j=0;j<6;j++)ridges.add(tube([v(sign*(11.06+j*.055),14.91+j*.18,-.28),v(sign*(11.72+j*.022),15+j*.17,-.28),v(sign*(12.08-j*.015),15.24+j*.12,-.2)],.027,m.ridge,'ridge'));}
+  for(let sign of [-1,1]){const ornament=new THREE.Mesh(chiwei,m.ridge);ornament.position.set(sign*(ridgeHalf+.08),ridgeY+.28,0);ornament.scale.set(sign*.94,.94,1);ornament.castShadow=true;ornament.userData.kind='ridge';ridges.add(ornament);for(let j=0;j<6;j++)ridges.add(tube([v(sign*(ridgeHalf-.31+j*.055),ridgeY+.63+j*.17,-.28),v(sign*(ridgeHalf+.35+j*.022),ridgeY+.72+j*.16,-.28),v(sign*(ridgeHalf+.71-j*.015),ridgeY+.96+j*.11,-.2)],.027,m.ridge,'ridge'));}
+  // Small central ridge finial visible in the supplied present-day elevations.
+  const finial=new Batch(new THREE.CylinderGeometry(.16,.24,.36,8),m.ridge,'ridge');
+  for(let i=0;i<3;i++)finial.add(v(0,ridgeY+.47+i*.25,0),v(1-i*.2,.7,1-i*.2));finial.finish(ridges);
   e.register(ridges,'ridge',v(0,10.2,0),0);
   return surfaces;
 }

@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import type {SceneController} from './scene';
 import {v} from './geometry';
+import {HALF_WIDTH,HALF_DEPTH} from './buildings/config';
+import {platformHeight} from './environment/Visitors';
+import {AUXILIARY} from './environment/layout';
 export class Walkthrough {
   active=false;
   keys=new Set<string>();
@@ -43,8 +46,12 @@ export class Walkthrough {
   }
   toggle(on:boolean){this.clearInput();this.active=on;this.scene.controls.enabled=!on;if(on){this.scene.setAuto(false);this.scene.camera.position.set(0,1.72,29);this.yaw=0;this.pitch=.1;}else{this.scene.controls.target.set(0,7,0);this.scene.home();}}
   update(dt:number){if(!this.active)return;const x=(this.keys.has('d')||this.keys.has('arrowright')?1:0)-(this.keys.has('a')||this.keys.has('arrowleft')?1:0),z=(this.keys.has('s')||this.keys.has('arrowdown')?1:0)-(this.keys.has('w')||this.keys.has('arrowup')?1:0);const next=this.scene.camera.position.clone();
-    if(x||z){const delta=v(x,0,z).normalize().applyAxisAngle(v(0,1,0),this.yaw).multiplyScalar(dt*(this.keys.has('shift')?6:3.8));next.add(delta);next.x=THREE.MathUtils.clamp(next.x,-31,31);next.z=THREE.MathUtils.clamp(next.z,-24,42);if(Math.abs(next.x)>18.1||Math.abs(next.z)>10.1){this.scene.camera.position.x=next.x;this.scene.camera.position.z=next.z;}}
-    const p=this.scene.camera.position;const platform=Math.abs(p.x)<20.1&&Math.abs(p.z)<12.1?2.15:Math.abs(p.x)<4.1&&p.z>=12.1&&p.z<17.8?THREE.MathUtils.clamp((17.8-p.z)/5.7,0,1)*2.15:0;p.y=THREE.MathUtils.damp(p.y,platform+1.72,9,dt);this.scene.camera.rotation.set(this.pitch,this.yaw,0,'YXZ');
+    if(x||z){const delta=v(x,0,z).normalize().applyAxisAngle(v(0,1,0),this.yaw).multiplyScalar(dt*(this.keys.has('shift')?6:3.8));next.add(delta);next.x=THREE.MathUtils.clamp(next.x,-41.9,41.9);next.z=THREE.MathUtils.clamp(next.z,-28.8,42);
+      const insideHall=Math.abs(next.x)<HALF_WIDTH+.55&&Math.abs(next.z)<HALF_DEPTH+.55;
+      const insideAux=Math.abs(next.x-AUXILIARY.x)<AUXILIARY.halfDepth+.4&&Math.abs(next.z-AUXILIARY.z)<AUXILIARY.halfWidth+.4;
+      const insideWestAux=next.x<-34&&next.z>-15.5&&next.z<-2.5;
+      if(!insideHall&&!insideAux&&!insideWestAux){this.scene.camera.position.x=next.x;this.scene.camera.position.z=next.z;}}
+    const p=this.scene.camera.position;p.y=THREE.MathUtils.damp(p.y,platformHeight(p.x,p.z)+1.72,9,dt);this.scene.camera.rotation.set(this.pitch,this.yaw,0,'YXZ');
   }
   dispose(){this.clearInput();this.cleanup.forEach(fn=>fn());}
 }

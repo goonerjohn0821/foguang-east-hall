@@ -22,6 +22,9 @@ export function createUI(app:HTMLElement,s:SceneController){
     <footer><span>数字遗产 · 建筑结构探索</span><span>程序化近似模型 <button id="note">模型与史实</button></span></footer></div>
     <div id="tooltip" role="tooltip" hidden></div><div id="toast" role="status" aria-live="polite"></div>
     <dialog id="about-dialog"><button class="icon-button dialog-close" id="close-about" aria-label="关闭模型说明">${icon('close')}</button><span class="card-category">关于这座数字模型</span><h2>看见唐代木构的层次</h2><p>佛光寺东大殿建于唐大中十一年（857年），以宽阔的单檐庑殿顶、深出檐和雄大的斗拱著称。五台山世界遗产说明也强调了东大殿及其山地环境的价值。</p><p>本项目是面向结构理解的程序化三维近似模型。保留七开间、四间进深、内外柱网、四坡屋面及大型铺作等识别特征。</p><p class="scope-note">梁架节点、榫卯、屋脊装饰、门窗、台地高差及寺院环境均有简化；未复原佛像、壁画与平棊。结构模式的颜色用于区分构件。拆解路径为展示设计，并非实际施工拆卸顺序。</p><a href="https://whc.unesco.org/en/list/1279/" target="_blank" rel="noopener noreferrer">查阅 UNESCO 五台山遗产说明 ↗</a><div class="interaction-help"><span>鼠标：左键旋转 / 右键平移 / 滚轮缩放</span><span>触屏：单指旋转 / 双指缩放与平移</span><span>漫游：拖动环顾 / WASD 或屏幕方向键移动</span><span>Esc：退出演示、漫游或关闭说明</span></div></dialog>`;
+  const assetNote=document.createElement('p');
+  assetNote.innerHTML='本次参照平立剖与结构照片校正七开间、五门两窗、深檐铺作及梁架；场地位置为参考图近似。二亮彩蛋采用 Quaternius 的 2017 OpenGameArt CC0 狗模型，并非真实犬只的扫描复原。<a href="./models/LICENSE-erliang.txt" target="_blank" rel="noopener noreferrer">模型来源与许可证 ↗</a>';
+  overlay.querySelector('.scope-note')!.after(assetNote);
   app.appendChild(overlay);
   const get=<T extends HTMLElement=HTMLElement>(id:string)=>overlay.querySelector<T>('#'+id)!;
   let structured=false,exploded=false,selected='dougong';let elapsed=0,toastUntil=0;

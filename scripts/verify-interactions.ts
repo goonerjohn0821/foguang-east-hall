@@ -22,7 +22,7 @@ canvas.getBoundingClientRect=()=>({left:0,top:0,right:width,bottom:height,x:0,y:
 // DOM simulation has no physical pointer capture; model the capture state only.
 const captured=new Set<number>();
 canvas.setPointerCapture=id=>{captured.add(id);};canvas.releasePointerCapture=id=>{captured.delete(id);};canvas.hasPointerCapture=id=>captured.has(id);
-const names=['column','beam','fang','dougong','purlin','rafter','door','tile','ridge','stone','plaster','paving','earth','bark','leaves','grass','dark','metal'];
+const names=['column','beam','fang','dougong','purlin','rafter','door','wallRed','tile','ridge','stone','plaster','paving','earth','bark','leaves','grass','dark','metal'];
 // Texture pixels and shader compilation are intentionally outside these tests.
 const materials=Object.fromEntries(names.map(key=>[key,new THREE.MeshStandardMaterial({color:0x705034})])) as Materials;
 const temple=new FoguangTemple(materials),camera=new THREE.PerspectiveCamera(42,width/height,.25,600);camera.position.set(42,20,57);
@@ -94,12 +94,17 @@ await test('取消触点后不会触发构件单击',()=>{
 await test('步行：键盘移动、碰撞边界、失焦停止和退出',()=>{
   click('walk');assert(ui.walk.active);assert(!controls.enabled);
   document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'w',bubbles:true,cancelable:true}));advance(1);assert(camera.position.z<26);
-  advance(8);assert(camera.position.z>=10.1);assert(camera.position.y>3);
+  advance(8);assert(camera.position.z>=9.38);assert(Math.abs(camera.position.y-2.44)<.05);
   window.dispatchEvent(new Event('blur'));assert.equal(ui.walk.keys.size,0);
   document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));advance(5);assert(!ui.walk.active);assert(controls.enabled);assert(el('walk-pad').hidden);
 });
 await test('步行说明弹窗不会保留移动按键',()=>{
   click('walk');document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'w',bubbles:true}));click('about');const before=camera.position.clone();advance(1);assert.equal(ui.walk.keys.size,0);assert.equal(camera.position.z,before.z);click('close-about');
+});
+await test('漫游可走到二亮门前，不能穿过重新定位的小建筑',()=>{
+  click('walk');camera.position.set(38,1.74,24);ui.walk.keys.add('d');advance(2);ui.walk.clearInput();
+  assert(camera.position.x>41&&camera.position.x<=41.9);assert.equal(camera.position.z,24);
+  camera.position.set(33,1.74,6.5);ui.walk.keys.add('d');advance(2);ui.walk.clearInput();assert(camera.position.x<=34.9);
 });
 await test('步行拖动退出重进后不残留上一次触点',()=>{
   click('walk');pointer('pointerdown',600,400);click('walk');click('walk');advance(.1);const initial=camera.quaternion.clone();pointer('pointermove',700,440);advance(.1);assert(camera.quaternion.angleTo(initial)<1e-6);pointer('pointerup',700,440);

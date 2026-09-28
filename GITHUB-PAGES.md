@@ -1,12 +1,13 @@
 # 发布到 GitHub Pages
 
-这是佛光寺东大殿第 2 版的 GitHub Pages 适配副本。模型、交互和材质代码保持原版，增加了相对资源路径、Pages 发布工作流和 `.nojekyll`。原网页继续保留。
+这是佛光寺东大殿既有 GitHub Pages 项目。2026-09-28 的参考图校正继续使用原仓库、相对资源路径、Pages 发布工作流和 `.nojekyll`，不迁移托管服务、不重新设计 UI。
 
 ## 当前状态
 
 - 项目文件和 GitHub Pages 配置已准备。
 - `dist/` 是可以独立发布的编译产物。
 - 项目仓库：[goonerjohn0821/foguang-east-hall](https://github.com/goonerjohn0821/foguang-east-hall)。发布状态请查看仓库 Actions 与 Settings → Pages。
+- 现有网页：[佛光寺东大殿 · 木构之间](https://goonerjohn0821.github.io/foguang-east-hall/)。
 - 远端自动构建的结果以 Actions 中对应提交的运行记录为准。
 - 尚未从中国大陆的运营商网络验证访问速度与可用性。
 
@@ -50,7 +51,7 @@ npm run dev
 
 GitHub Pages 是另一套网站托管服务，并不是大陆访问保证。某一座校园模型能打开，仅能说明当时该网址在所用网络可达。发布后请关闭代理，分别使用大陆 Wi-Fi 与手机流量测试新网址，确认模型资源加载、旋转、拆解及结构模式可用。微信内置浏览器与系统浏览器也可以分别比较。
 
-网页没有外部模型、第三方字体或运行时 CDN 依赖。模型说明中的 UNESCO 链接仅供点击查阅，不是画面加载依赖。迁移托管地址也不会取消设备对 WebGL 2 的要求。
+建筑仍由代码生成。狗模型虽来自第三方 CC0 资源，但已存放在 `public/models/` 并随网页同源发布，没有第三方字体或运行时 CDN 依赖。模型说明中的外部链接仅供查阅，不是画面加载依赖。迁移托管地址也不会取消设备对 WebGL 2 的要求。
 
 ## 参考
 
