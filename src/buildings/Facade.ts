@@ -4,7 +4,7 @@ import type {Materials} from '../materials';
 import type {Explosion} from '../explosion';
 import {FRONT_BAYS,FLOOR,COLUMN_TOP,HALF_WIDTH,HALF_DEPTH} from './config';
 
-/** Five broad plank-door bays, two end windows; infill meets the platform. */
+/** Five entrance bays (the central bay is open), two end windows; infill meets the platform. */
 export function buildFacade(parent:THREE.Group,m:Materials,e:Explosion){
   const sill=FLOOR+1.65,windowTop=COLUMN_TOP-.48,head=COLUMN_TOP-.55;
   for(let face=0;face<4;face++){
@@ -18,11 +18,11 @@ export function buildFacade(parent:THREE.Group,m:Materials,e:Explosion){
         wood.add(v(x,head,z),v(w,.28,.34));
         for(const s of [-1,1])wood.add(v(x+s*(w/2-.075),(FLOOR+head)/2,z),v(.16,head-FLOOR,.34));
         if(bay.door){
-          // The historic front is read as five full-height double plank doors.
-          // Narrow true seams are preferable to floating or overlapping open leaves.
+          // The photo shows the central entrance open: retain its frame / sill only.
+          // The four flanking door bays keep their existing closed plank leaves.
           const bottom=FLOOR+.10,top=head-.14;
           wood.add(v(x,FLOOR+.055,z),v(w,.11,.37));
-          for(const side of [-1,1]){
+          for(const side of bay.index===3?[]:[-1,1]){
             const cx=x+side*w/4,lw=w/2-.024;
             for(let plank=0;plank<6;plank++){
               const tone=.87+((plank*7+bay.index*3)%9)*.023;

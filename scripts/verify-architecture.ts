@@ -21,12 +21,16 @@ const environment=createEnvironment(scene,materials);scene.updateMatrixWorld(tru
 const results:{name:string;status:string}[]=[];
 function test(name:string,fn:()=>void){fn();results.push({name,status:'passed'});}
 
-test('七开间、五板门两直棂窗、22 外柱 + 14 内柱',()=>{
+test('七开间、中央敞开且两侧四板门两直棂窗、22 外柱 + 14 内柱',()=>{
   assert.equal(FRONT_BAYS.length,7);assert.equal(FRONT_BAYS.filter(b=>b.door).length,5);
   assert(FRONT_BAYS.slice(1,6).every(b=>b.door));assert(!FRONT_BAYS[0].door&&!FRONT_BAYS[6].door);
   assert(BAY_WIDTHS[0]<BAY_WIDTHS[1]&&BAY_WIDTHS[6]<BAY_WIDTHS[5]);
   assert.equal(columns.filter(c=>!c.interior).length,22);assert.equal(columns.filter(c=>c.interior).length,14);
   assert(Math.abs(HALF_WIDTH*2-34.15)<1e-8);assert(ROOF.halfZ-HALF_DEPTH>3.7);
+  const front=temple.group.getObjectByName('正面五门两窗')!;
+  const hits=(x:number)=>new THREE.Raycaster(new THREE.Vector3(x,FLOOR+2,HALF_DEPTH+.6),new THREE.Vector3(0,0,-1),0,1.5).intersectObject(front,true);
+  for(const x of [-1.2,0,1.2])assert.equal(hits(x).length,0,'central entrance must remain open');
+  for(const index of [1,2,4,5])assert(hits(FRONT_BAYS[index].center+.3).length>0,'flanking door leaves must remain closed');
 });
 test('瓦垄沿固定平面轴线铺设，止于四坡交界',()=>{
   for(let face=0;face<4;face++)for(const lateral of [-.8,0,.8].map(u=>u*(face<2?ROOF.halfX:ROOF.halfZ))){
