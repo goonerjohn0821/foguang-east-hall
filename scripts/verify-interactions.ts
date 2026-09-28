@@ -11,6 +11,7 @@ import {createUI} from '../src/ui';
 import {registerViewerTools} from '../src/webmcp';
 import type {Materials} from '../src/materials';
 import type {SceneController} from '../src/scene';
+import {ERLIANG_GATE,LEFT_AUXILIARY} from '../src/environment/layout';
 
 const dom=new Window({url:'http://localhost/'});
 for(const key of ['window','document','navigator','HTMLElement','Element','Event','PointerEvent','KeyboardEvent','WheelEvent','AbortController'])Object.defineProperty(globalThis,key,{configurable:true,value:key==='window'?dom:(dom as any)[key]});
@@ -101,9 +102,10 @@ await test('步行：键盘移动、碰撞边界、失焦停止和退出',()=>{
 await test('步行说明弹窗不会保留移动按键',()=>{
   click('walk');document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'w',bubbles:true}));click('about');const before=camera.position.clone();advance(1);assert.equal(ui.walk.keys.size,0);assert.equal(camera.position.z,before.z);click('close-about');
 });
-await test('漫游可走到二亮门前，不能穿过重新定位的小建筑',()=>{
-  click('walk');camera.position.set(38,1.74,24);ui.walk.keys.add('d');advance(2);ui.walk.clearInput();
-  assert(camera.position.x>41&&camera.position.x<=41.9);assert.equal(camera.position.z,24);
+await test('漫游可走到左后方二亮门前，左右两座小建筑均不能穿过',()=>{
+  click('walk');camera.position.set(-38,1.74,ERLIANG_GATE.z);ui.walk.keys.add('a');advance(2);ui.walk.clearInput();
+  assert(camera.position.x<-41&&camera.position.x>=-41.9);assert.equal(camera.position.z,ERLIANG_GATE.z);
+  camera.position.set(-33,1.74,LEFT_AUXILIARY.z);ui.walk.keys.add('a');advance(2);ui.walk.clearInput();assert(camera.position.x>=-34.9);
   camera.position.set(33,1.74,6.5);ui.walk.keys.add('d');advance(2);ui.walk.clearInput();assert(camera.position.x<=34.9);
 });
 await test('步行拖动退出重进后不残留上一次触点',()=>{

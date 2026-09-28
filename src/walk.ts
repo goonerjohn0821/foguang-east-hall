@@ -3,7 +3,7 @@ import type {SceneController} from './scene';
 import {v} from './geometry';
 import {HALF_WIDTH,HALF_DEPTH} from './buildings/config';
 import {platformHeight} from './environment/Visitors';
-import {AUXILIARY} from './environment/layout';
+import {AUXILIARY,LEFT_AUXILIARY} from './environment/layout';
 export class Walkthrough {
   active=false;
   keys=new Set<string>();
@@ -49,7 +49,7 @@ export class Walkthrough {
     if(x||z){const delta=v(x,0,z).normalize().applyAxisAngle(v(0,1,0),this.yaw).multiplyScalar(dt*(this.keys.has('shift')?6:3.8));next.add(delta);next.x=THREE.MathUtils.clamp(next.x,-41.9,41.9);next.z=THREE.MathUtils.clamp(next.z,-28.8,42);
       const insideHall=Math.abs(next.x)<HALF_WIDTH+.55&&Math.abs(next.z)<HALF_DEPTH+.55;
       const insideAux=Math.abs(next.x-AUXILIARY.x)<AUXILIARY.halfDepth+.4&&Math.abs(next.z-AUXILIARY.z)<AUXILIARY.halfWidth+.4;
-      const insideWestAux=next.x<-34&&next.z>-15.5&&next.z<-2.5;
+      const insideWestAux=Math.abs(next.x-LEFT_AUXILIARY.x)<LEFT_AUXILIARY.halfDepth+.4&&Math.abs(next.z-LEFT_AUXILIARY.z)<LEFT_AUXILIARY.halfWidth+.4;
       if(!insideHall&&!insideAux&&!insideWestAux){this.scene.camera.position.x=next.x;this.scene.camera.position.z=next.z;}}
     const p=this.scene.camera.position;p.y=THREE.MathUtils.damp(p.y,platformHeight(p.x,p.z)+1.72,9,dt);this.scene.camera.rotation.set(this.pitch,this.yaw,0,'YXZ');
   }

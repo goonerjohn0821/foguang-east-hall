@@ -8,7 +8,7 @@ import {FoguangTemple} from '../src/buildings/FoguangTemple';
 import {BAY_WIDTHS,FRONT_BAYS,columns,FLOOR,HALF_DEPTH,HALF_WIDTH,ROOF} from '../src/buildings/config';
 import {roofPoint,roofLaneStart,roofLanePoint} from '../src/buildings/Roof';
 import {createEnvironment} from '../src/environment';
-import {AUXILIARY,COURT,ERLIANG_GATE} from '../src/environment/layout';
+import {AUXILIARY,LEFT_AUXILIARY,COURT,ERLIANG_GATE} from '../src/environment/layout';
 import {VISITORS,platformHeight} from '../src/environment/Visitors';
 import {prepareErliang,poseErliang,peekAmount} from '../src/environment/Erliang';
 
@@ -83,11 +83,21 @@ test('3 人符合常人身高，脚底位于真实台基或踏步',()=>{
   VISITORS.forEach(p=>{assert(p.height>=1.6&&p.height<=1.85);assert(platformHeight(p.x,p.z)>0);assert(platformHeight(p.x,p.z)<=FLOOR);});
   assert.equal(platformHeight(VISITORS[2].x,VISITORS[2].z),.36);
 });
-test('辅助建筑在右侧院墙内面向院落，门在其旁边的独立围墙上',()=>{
+test('左右小建筑复用相同模型、朝向院内；门在左墙且位于左建筑后方',()=>{
   assert(AUXILIARY.x+AUXILIARY.halfDepth<COURT.wallX);
   const facing=new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0),AUXILIARY.rotation);
-  assert(facing.x<-.99);assert.equal(ERLIANG_GATE.x,COURT.wallX);
-  assert(ERLIANG_GATE.z>AUXILIARY.z+AUXILIARY.halfWidth+ERLIANG_GATE.width);
+  assert(facing.x<-.99);assert.equal(ERLIANG_GATE.x,-COURT.wallX);
+  assert(LEFT_AUXILIARY.x-LEFT_AUXILIARY.halfDepth>-COURT.wallX);
+  assert(new THREE.Vector3(0,0,1).applyAxisAngle(new THREE.Vector3(0,1,0),LEFT_AUXILIARY.rotation).x>.99);
+  assert(ERLIANG_GATE.z+ERLIANG_GATE.width/2<LEFT_AUXILIARY.z-LEFT_AUXILIARY.halfWidth-1);
+  assert.equal(ERLIANG_GATE.rotation,LEFT_AUXILIARY.rotation);
+  const right=environment.getObjectByName('右侧小建筑 · 保持原位')!,left=environment.getObjectByName('左侧小建筑 · 复用右侧样式')!;
+  assert.deepEqual(right.position.toArray(),[38.35,0,6.5]);assert.equal(right.rotation.y,-Math.PI/2);
+  assert.deepEqual(left.position.toArray(),[LEFT_AUXILIARY.x,0,LEFT_AUXILIARY.z]);
+  assert.equal(environment.children.filter(o=>o.name.includes('侧小建筑')).length,2);
+  const meshes=(root:THREE.Object3D)=>{const list:THREE.Mesh[]=[];root.traverse(o=>{if(o instanceof THREE.Mesh)list.push(o);});return list;};
+  const original=meshes(right),copy=meshes(left);assert.equal(copy.length,original.length);
+  copy.forEach((mesh,i)=>{assert.equal(mesh.geometry,original[i].geometry);assert.equal(mesh.material,original[i].material);});
 });
 const anchor=environment.userData.erliangAnchor as THREE.Group,gate=anchor.parent!;
 test('门叶和院墙均留有真实洞口，射线可穿过而旁边木板不可穿过',()=>{
@@ -100,6 +110,7 @@ test('门叶和院墙均留有真实洞口，射线可穿过而旁边木板不�
     return new THREE.Raycaster(start,direction,0,1.2).intersectObjects([...leaves,wall],false);
   }
   assert.equal(hits(.12,.5).length,0);assert(hits(-.45,.5).length>0);assert(hits(.12,1.3).length>0);
+  assert(new THREE.Raycaster(new THREE.Vector3(41.8,.5,24),new THREE.Vector3(1,0,0),0,2).intersectObject(wall,false).length>0,'former right-wall gate must be closed');
 });
 const obj=readFileSync('public/models/erliang-dog.obj','utf8');
 const dog=prepareErliang(new OBJLoader().parse(obj));anchor.add(dog);poseErliang(dog,1);
@@ -118,8 +129,8 @@ test('探头进入、停留、退出周期正确，重复动作无累计偏移',
 });
 test('结构模式不会使独立小建筑和门一起透明',()=>{
   temple.setStructure(true);for(let i=0;i<270;i++)temple.update(1/60);
-  const aux=environment.getObjectByName('主殿旁小建筑 · 红圈位置')!;
-  for(const group of [aux,gate])group.traverse(o=>{if(o instanceof THREE.Mesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>assert.equal(m.opacity,1));});
+  const right=environment.getObjectByName('右侧小建筑 · 保持原位')!,left=environment.getObjectByName('左侧小建筑 · 复用右侧样式')!;
+  for(const group of [right,left,gate])group.traverse(o=>{if(o instanceof THREE.Mesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>assert.equal(m.opacity,1));});
   temple.setStructure(false);for(let i=0;i<270;i++)temple.update(1/60);
 });
 scene.updateMatrixWorld(true);
