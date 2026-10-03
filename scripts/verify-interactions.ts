@@ -25,6 +25,8 @@ const captured=new Set<number>();
 canvas.setPointerCapture=id=>{captured.add(id);};canvas.releasePointerCapture=id=>{captured.delete(id);};canvas.hasPointerCapture=id=>captured.has(id);
 const names=['column','beam','fang','dougong','purlin','rafter','door','wallRed','tile','ridge','stone','plaster','paving','earth','bark','leaves','grass','dark','metal'];
 // Texture pixels and shader compilation are intentionally outside these tests.
+const paintContext=new Proxy({},{get:()=>()=>{},set:()=>true});
+dom.HTMLCanvasElement.prototype.getContext=(()=>paintContext) as any;
 const materials=Object.fromEntries(names.map(key=>[key,new THREE.MeshStandardMaterial({color:0x705034})])) as Materials;
 const temple=new FoguangTemple(materials),camera=new THREE.PerspectiveCamera(42,width/height,.25,600);camera.position.set(42,20,57);
 const controls=new OrbitControls(camera,canvas),view=new TempleView(camera,controls,()=>width);

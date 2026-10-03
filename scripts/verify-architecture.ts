@@ -7,6 +7,7 @@ import type {Materials} from '../src/materials';
 import {FoguangTemple} from '../src/buildings/FoguangTemple';
 import {BAY_WIDTHS,FRONT_BAYS,columns,FLOOR,HALF_DEPTH,HALF_WIDTH,ROOF} from '../src/buildings/config';
 import {roofPoint,roofLaneStart,roofLanePoint} from '../src/buildings/Roof';
+import {upperRoofHeight} from '../src/buildings/UpperEnclosure';
 import {createEnvironment} from '../src/environment';
 import {AUXILIARY,LEFT_AUXILIARY,COURT,ERLIANG_GATE} from '../src/environment/layout';
 import {VISITORS,platformHeight} from '../src/environment/Visitors';
@@ -40,6 +41,23 @@ test('瓦垄沿固定平面轴线铺设，止于四坡交界',()=>{
       assert(Math.abs((face<2?p.x:p.z)-lateral)<1e-7);
     }
   }
+});
+test('斗拱后方四面木壁遮住室内，顶部衔接屋顶；中央牌匾随外墙拆装',()=>{
+  const backing:THREE.Mesh[]=[];temple.group.traverse(o=>{if(o instanceof THREE.Mesh&&o.name==='斗拱后方封闭木壁')backing.push(o);});
+  assert.equal(backing.length,4);
+  for(let face=0;face<4;face++){
+    const front=face<2,sign=face===0||face===2?1:-1;
+    for(const lateral of [-.8,0,.8].map(t=>t*(front?HALF_WIDTH:HALF_DEPTH)))for(const y of [6.25,7.1,8.6,9.35]){
+      const start=new THREE.Vector3(front?lateral:sign*(HALF_WIDTH+1),y,front?sign*(HALF_DEPTH+1):lateral);
+      const direction=new THREE.Vector3(front?0:-sign,0,front?-sign:0);
+      assert(new THREE.Raycaster(start,direction,0,2).intersectObject(backing[face],false).length>0);
+    }
+    const p=backing[face].geometry.getAttribute('position');
+    for(let i=1;i<p.count;i+=2)assert(Math.abs(p.getY(i)-upperRoofHeight(p.getX(i),p.getZ(i)))<1e-5);
+  }
+  const plaque=temple.group.getObjectByName('佛光眞容禪寺匾额')!;
+  assert.equal(plaque.parent?.name,'正面五门两窗');assert.equal(plaque.position.x,0);
+  assert(plaque.position.y-1.67>5.6,'plaque must remain above the open central entrance');
 });
 test('柱头、补间、转角、内槽四种样板，13 个实例化批次',()=>{
   assert.deepEqual(temple.group.userData.brackets,{columnHead:18,corner:4,intercolumn:22,inner:14,courses:7});
@@ -133,9 +151,11 @@ test('探头进入、停留、退出周期正确，重复动作无累计偏移',
 });
 test('结构模式不会使独立小建筑和门一起透明',()=>{
   temple.setStructure(true);for(let i=0;i<270;i++)temple.update(1/60);
+  assert(temple.facadeMaterials.every(m=>m.opacity<.101&&m.depthWrite===false));
   const right=environment.getObjectByName('右侧小建筑 · 保持原位')!,left=environment.getObjectByName('左侧小建筑 · 复用右侧样式')!;
   for(const group of [right,left,gate])group.traverse(o=>{if(o instanceof THREE.Mesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>assert.equal(m.opacity,1));});
   temple.setStructure(false);for(let i=0;i<270;i++)temple.update(1/60);
+  assert(temple.facadeMaterials.every(m=>m.opacity>.999&&m.depthWrite===true));
 });
 scene.updateMatrixWorld(true);
 let meshes=0,instances=0,triangles=0;

@@ -3,9 +3,13 @@ import {Batch,boxGeometry,v} from '../geometry';
 import type {Materials} from '../materials';
 import type {Explosion} from '../explosion';
 import {FRONT_BAYS,FLOOR,COLUMN_TOP,HALF_WIDTH,HALF_DEPTH} from './config';
+import {buildPlaque} from './Plaque';
+import {buildUpperEnclosure} from './UpperEnclosure';
 
 /** Five entrance bays (the central bay is open), two end windows; infill meets the platform. */
 export function buildFacade(parent:THREE.Group,m:Materials,e:Explosion){
+  const backing=m.door.clone();backing.color.setHex(0x65513f);
+  const surfaces:THREE.MeshStandardMaterial[]=[backing];
   const sill=FLOOR+1.65,windowTop=COLUMN_TOP-.48,head=COLUMN_TOP-.55;
   for(let face=0;face<4;face++){
     const group=new THREE.Group();group.name=['正面五门两窗','后檐墙','右山墙','左山墙'][face];parent.add(group);
@@ -59,9 +63,12 @@ export function buildFacade(parent:THREE.Group,m:Materials,e:Explosion){
       for(let n=0;n<13;n++)lattice.add(v(x,(windowLow+windowHigh)/2,windowZ-windowWidth/2+.12+n*(windowWidth-.24)/12),v(.12,windowHigh-windowLow,.056));
       wood.add(v(x,COLUMN_TOP-.34,0),v(.46,.18,HALF_DEPTH*2));
     }
+    buildUpperEnclosure(group,face,wood,backing);
+    if(face===0)surfaces.push(buildPlaque(group,m));
     wall.finish(group);stone.finish(group);red.finish(group);wood.finish(group);lattice.finish(group);metal.finish(group);
     e.register(group,'wall',face===0?v(0,.3,4.4):face===1?v(0,.3,-4.4):face===2?v(4.4,.3,0):v(-4.4,.3,0),5,face);
   }
   const floor=new THREE.Group();parent.add(floor);
   const b=new Batch(boxGeometry,m.dark,'foundation');b.add(v(0,FLOOR+.018,0),v(HALF_WIDTH*2-.65,.024,HALF_DEPTH*2-.65));b.finish(floor);e.register(floor,'foundation',v(0,-.5,0),8);
+  return surfaces;
 }
